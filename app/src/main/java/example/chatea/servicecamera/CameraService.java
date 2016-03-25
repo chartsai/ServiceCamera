@@ -108,7 +108,7 @@ public class CameraService extends Service {
                         mMediaRecorder = new MediaRecorder();
                         mMediaRecorder.setCamera(mCamera);
 
-                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);                
                         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
                         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
