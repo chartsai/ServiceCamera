@@ -7,8 +7,10 @@ import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.ResultReceiver;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -21,6 +23,13 @@ import java.io.IOException;
 import java.util.List;
 
 public class CameraService extends Service {
+
+    public static final String RESULT_RECEIVER = "resultReceiver";
+    public static final String VIDEO_PATH = "recordedVideoPath";
+
+    public static final int RECORD_RESULT_OK = 0;
+    public static final int RECORD_RESULT_DEVICE_NO_CAMERA= 1;
+    public static final int RECORD_RESULT_GET_CAMERA_FAILED = 2;
 
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
@@ -54,6 +63,8 @@ public class CameraService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         Log.d("TAG", "======= service in onStartCommand");
+
+        final ResultReceiver resultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
 
         if (Util.checkCameraHardware(this)) {
             mCamera = Util.getCameraInstance();
@@ -113,7 +124,8 @@ public class CameraService extends Service {
 
                         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
 
-                        mMediaRecorder.setOutputFile(Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath());
+                        final String recordedVideoPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
+                        mMediaRecorder.setOutputFile(recordedVideoPath);
 
                         mMediaRecorder.setPreviewDisplay(holder.getSurface());
 
@@ -134,6 +146,10 @@ public class CameraService extends Service {
                                 mMediaRecorder.release();
                                 mCamera.stopPreview();
                                 mCamera.release();
+
+                                Bundle b = new Bundle();
+                                b.putString(VIDEO_PATH, recordedVideoPath);
+                                resultReceiver.send(RECORD_RESULT_OK, b);
                                 Log.d("TAG", "========== recording finished.");
                             }
                         }, 10000);
@@ -153,9 +169,11 @@ public class CameraService extends Service {
 
             } else {
                 Log.d("TAG", "==== get Camera from service failed");
+                resultReceiver.send(RECORD_RESULT_GET_CAMERA_FAILED, null);
             }
         } else {
             Log.d("TAG", "==== There is no camera hardware on device.");
+            resultReceiver.send(RECORD_RESULT_DEVICE_NO_CAMERA, null);
         }
 
         return super.onStartCommand(intent, flags, startId);
