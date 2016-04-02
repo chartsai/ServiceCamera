@@ -1,7 +1,10 @@
 package example.chatea.servicecamera;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
@@ -15,11 +18,28 @@ public class MainActivity extends Activity {
     private boolean mRecording;
 
     private Button bt_recordingButton;
+    private IntentFilter mIntentFilter;
+    private PhonecallReceiver phonecallReceiver;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(phonecallReceiver, mIntentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(phonecallReceiver);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mIntentFilter= new IntentFilter("phone_call");
+        phonecallReceiver = new PhonecallReceiver();
 
         bt_recordingButton = (Button) findViewById(R.id.recording_button);
         bt_recordingButton.setOnClickListener(new View.OnClickListener() {
