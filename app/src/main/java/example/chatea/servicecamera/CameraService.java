@@ -8,7 +8,6 @@ import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.util.Log;
@@ -23,6 +22,21 @@ import java.io.IOException;
 import java.util.List;
 
 public class CameraService extends Service {
+    private static final String TAG = CameraService.class.getSimpleName();
+
+//    public static final String RESULT_RECEIVER = "resultReceiver";
+//    public static final String VIDEO_PATH = "recordedVideoPath";
+
+//    public static final int RECORD_RESULT_OK = 0;
+//    public static final int RECORD_RESULT_DEVICE_NO_CAMERA= 1;
+//    public static final int RECORD_RESULT_GET_CAMERA_FAILED = 2;
+    public static final int RECORD_RESULT_ALREADY_RECORDING = 3;
+    public static final int RECORD_RESULT_NOT_RECORDING = 4;
+
+    private static final String START_SERVICE_COMMAND = "startServiceCommands";
+    private static final int COMMAND_NONE = -1;
+    private static final int COMMAND_START_RECORDING = 0;
+    private static final int COMMAND_STOP_RECORDING = 1;
 
     public static final String RESULT_RECEIVER = "resultReceiver";
     public static final String VIDEO_PATH = "recordedVideoPath";
@@ -34,7 +48,24 @@ public class CameraService extends Service {
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
 
+    private boolean mRecording = false;
+    private String mRecordingPath = null;
+
     public CameraService() {
+    }
+
+    public static void startToStartRecording(Context context, ResultReceiver resultReceiver) {
+        Intent intent = new Intent(context, CameraService.class);
+        intent.putExtra(START_SERVICE_COMMAND, COMMAND_START_RECORDING);
+        intent.putExtra(RESULT_RECEIVER, resultReceiver);
+        context.startService(intent);
+    }
+
+    public static void startToStopRecording(Context context, ResultReceiver resultReceiver) {
+        Intent intent = new Intent(context, CameraService.class);
+        intent.putExtra(START_SERVICE_COMMAND, COMMAND_STOP_RECORDING);
+        intent.putExtra(RESULT_RECEIVER, resultReceiver);
+        context.startService(intent);
     }
 
     /**
@@ -61,10 +92,31 @@ public class CameraService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        switch (intent.getIntExtra(START_SERVICE_COMMAND, COMMAND_NONE)) {
+            case COMMAND_START_RECORDING:
+                handleStartRecordingCommand(intent);
+                break;
+            case COMMAND_STOP_RECORDING:
+                handleStopRecordingCommand(intent);
+                break;
+            default:
+                throw new UnsupportedOperationException("Cannot start service with illegal commands");
+        }
 
-        Log.d("TAG", "======= service in onStartCommand");
+        return START_STICKY;
+    }
 
+    private void handleStartRecordingCommand(Intent intent) {
         final ResultReceiver resultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
+
+        if (mRecording) {
+            // Already recording
+            resultReceiver.send(RECORD_RESULT_ALREADY_RECORDING, null);
+            return;
+        }
+        mRecording = true;
+
+//        final ResultReceiver resultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
 
         if (Util.checkCameraHardware(this)) {
             mCamera = Util.getCameraInstance();
@@ -77,12 +129,10 @@ public class CameraService extends Service {
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                         PixelFormat.TRANSLUCENT);
 
-
                 SurfaceHolder sh = sv.getHolder();
 
                 sv.setZOrderOnTop(true);
                 sh.setFormat(PixelFormat.TRANSPARENT);
-
 
                 sh.addCallback(new SurfaceHolder.Callback() {
                     @Override
@@ -112,47 +162,29 @@ public class CameraService extends Service {
                             e.printStackTrace();
                         }
                         mCamera.startPreview();
-//                    mCamera.takePicture(null, null, mPicture); // used to takePicture.
 
                         mCamera.unlock();
 
                         mMediaRecorder = new MediaRecorder();
                         mMediaRecorder.setCamera(mCamera);
-
                         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
                         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-
                         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
-
-                        final String recordedVideoPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
-                        mMediaRecorder.setOutputFile(recordedVideoPath);
-
+                        mRecordingPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
+                        mMediaRecorder.setOutputFile(mRecordingPath);
                         mMediaRecorder.setPreviewDisplay(holder.getSurface());
 
                         try {
                             mMediaRecorder.prepare();
                         } catch (IllegalStateException e) {
-                            Log.d("TAG", "====== IllegalStateException preparing MediaRecorder: " + e.getMessage());
+                            Log.d(TAG, "IllegalStateException when preparing MediaRecorder: " + e.getMessage());
                         } catch (IOException e) {
-                            Log.d("TAG", "====== IOException preparing MediaRecorder: " + e.getMessage());
+                            Log.d(TAG, "IOException when preparing MediaRecorder: " + e.getMessage());
                         }
                         mMediaRecorder.start();
-                        Log.d("TAG", "========= recording start");
 
-                        new Handler().postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mMediaRecorder.stop();
-                                mMediaRecorder.release();
-                                mCamera.stopPreview();
-                                mCamera.release();
-
-                                Bundle b = new Bundle();
-                                b.putString(VIDEO_PATH, recordedVideoPath);
-                                resultReceiver.send(RECORD_RESULT_OK, b);
-                                Log.d("TAG", "========== recording finished.");
-                            }
-                        }, 10000);
+                        resultReceiver.send(RECORD_RESULT_OK, null);
+                        Log.d(TAG, "Recording is started");
                     }
 
                     @Override
@@ -168,15 +200,39 @@ public class CameraService extends Service {
                 wm.addView(sv, params);
 
             } else {
-                Log.d("TAG", "==== get Camera from service failed");
+
+                Log.d(TAG, "Get Camera from service failed");
                 resultReceiver.send(RECORD_RESULT_GET_CAMERA_FAILED, null);
             }
         } else {
-            Log.d("TAG", "==== There is no camera hardware on device.");
+            Log.d(TAG, "There is no camera hardware on device.");
             resultReceiver.send(RECORD_RESULT_DEVICE_NO_CAMERA, null);
         }
+    }
 
-        return super.onStartCommand(intent, flags, startId);
+    private void handleStopRecordingCommand(Intent intent) {
+        ResultReceiver resultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
+
+        if (!mRecording) {
+            // have not recorded
+            resultReceiver.send(RECORD_RESULT_NOT_RECORDING, null);
+            return;
+        }
+
+        mMediaRecorder.stop();
+        mMediaRecorder.release();
+        mCamera.stopPreview();
+        mCamera.release();
+
+        Bundle b = new Bundle();
+        b.putString(VIDEO_PATH, mRecordingPath);
+
+        mRecordingPath = null;
+
+        resultReceiver.send(RECORD_RESULT_OK, b);
+
+        mRecording = false;
+        Log.d(TAG, "recording is finished.");
     }
 
     @Override

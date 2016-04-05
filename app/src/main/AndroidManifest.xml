@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="example.chatea.servicecamera" >
+    package="example.chatea.servicecamera">
 
     <uses-feature android:name="android.hardware.camera" />
+
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -15,10 +16,10 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name" >
+        android:label="@string/app_name">
         <activity
             android:name=".MainActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,9 +29,9 @@
 
         <service
             android:name=".CameraService"
-            android:enabled="true" >
-        </service>
+            android:enabled="true"></service>
 
+<<<<<<< HEAD
         <receiver android:name=".PhonecallReceiver">
 
             <intent-filter>
@@ -46,6 +47,9 @@
 
         </receiver>
 
+=======
+        <activity android:name=".myVideoList"></activity>
+>>>>>>> feature/myVideoList
     </application>
 
 </manifest>
