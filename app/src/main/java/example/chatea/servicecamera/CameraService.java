@@ -8,6 +8,7 @@ import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+
 import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.util.Log;
@@ -109,6 +110,7 @@ public class CameraService extends Service {
         }
         mRecording = true;
 
+
         if (Util.checkCameraHardware(this)) {
             mCamera = Util.getCameraInstance();
             if (mCamera != null) {
@@ -163,9 +165,9 @@ public class CameraService extends Service {
                         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
                         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
-
                         mRecordingPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
                         mMediaRecorder.setOutputFile(mRecordingPath);
+
 
                         mMediaRecorder.setPreviewDisplay(holder.getSurface());
 
@@ -180,6 +182,7 @@ public class CameraService extends Service {
 
                         resultReceiver.send(RECORD_RESULT_OK, null);
                         Log.d(TAG, "Recording is started");
+
                     }
 
                     @Override
@@ -211,6 +214,7 @@ public class CameraService extends Service {
             // have not recorded
             resultReceiver.send(RECORD_RESULT_NOT_RECORDING, null);
             return;
+
         }
 
         mMediaRecorder.stop();
