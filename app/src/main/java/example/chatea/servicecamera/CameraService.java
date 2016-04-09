@@ -1,20 +1,29 @@
 package example.chatea.servicecamera;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ResultReceiver;
+import android.provider.MediaStore;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -28,7 +37,7 @@ public class CameraService extends Service {
     public static final String VIDEO_PATH = "recordedVideoPath";
 
     public static final int RECORD_RESULT_OK = 0;
-    public static final int RECORD_RESULT_DEVICE_NO_CAMERA= 1;
+    public static final int RECORD_RESULT_DEVICE_NO_CAMERA = 1;
     public static final int RECORD_RESULT_GET_CAMERA_FAILED = 2;
     public static final int RECORD_RESULT_ALREADY_RECORDING = 3;
     public static final int RECORD_RESULT_NOT_RECORDING = 4;
@@ -37,6 +46,7 @@ public class CameraService extends Service {
     private static final int COMMAND_NONE = -1;
     private static final int COMMAND_START_RECORDING = 0;
     private static final int COMMAND_STOP_RECORDING = 1;
+    private int i = 1;
 
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
@@ -86,13 +96,14 @@ public class CameraService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getIntExtra(START_SERVICE_COMMAND, COMMAND_NONE)) {
+            //TODO bug:Sometime intent.getIntExtra is Null
             case COMMAND_START_RECORDING:
                 handleStartRecordingCommand(intent);
                 break;
             case COMMAND_STOP_RECORDING:
                 handleStopRecordingCommand(intent);
                 break;
-            default: 
+            default:
                 throw new UnsupportedOperationException("Cannot start service with illegal commands");
         }
 
@@ -226,6 +237,38 @@ public class CameraService extends Service {
 
         mRecording = false;
         Log.d(TAG, "recording is finished.");
+        //Send locall Notification
+        newHaloMovieReminder();
+    }
+
+    private void newHaloMovieReminder() {
+        try {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            Notification.Builder builder = new Notification.Builder(this);
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra("RecordingPath", mRecordingPath);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent contentIndent = PendingIntent.getActivity(
+                    this, 0, intent,
+                    PendingIntent.FLAG_ONE_SHOT);
+            builder.setContentIntent(contentIndent)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setLargeIcon(
+                            BitmapFactory.decodeResource(this.getResources(),
+                                    R.mipmap.ic_launcher))
+                    .setTicker("Halo | PhoneCall Movie")
+                    .setWhen(System.currentTimeMillis())
+                    .setAutoCancel(true)
+                    .setContentTitle("Halo")
+                    .setContentText("get new PhoneCall Movie");
+            Notification notification = builder.getNotification();
+            notification.defaults |= Notification.DEFAULT_SOUND;
+            notification.defaults |= Notification.DEFAULT_LIGHTS;
+            notificationManager.notify(1, notification);
+            i++;  // for multiple Notification lines
+        } catch (Exception e) {
+            Log.d(TAG, "Notification something wrong");
+        }
     }
 
     @Override
