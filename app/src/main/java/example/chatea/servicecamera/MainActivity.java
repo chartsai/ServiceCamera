@@ -8,13 +8,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-
 /**
  * TODO add keyguard when recording. (Cannot leave app when it is recording)
  */
 public class MainActivity extends Activity {
 
     private boolean mRecording;
+
     private Button bt_recordingButton;
 
     @Override
@@ -54,11 +54,11 @@ public class MainActivity extends Activity {
         ResultReceiver receiver = new ResultReceiver(new Handler()) {
             @Override
             protected void onReceiveResult(int resultCode, Bundle resultData) {
-                handleStartRecordingResult(resultCode, resultData);
+                handleStopRecordingResult(resultCode, resultData);
             }
         };
 
-        CameraService.startToStartRecording(this, receiver);
+        CameraService.startToStopRecording(this, receiver);
     }
 
     private void setRecording(boolean recording) {

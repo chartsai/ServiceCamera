@@ -46,15 +46,14 @@ public class CameraService extends Service {
     private static final int COMMAND_NONE = -1;
     private static final int COMMAND_START_RECORDING = 0;
     private static final int COMMAND_STOP_RECORDING = 1;
-    private int i = 1;
 
+    private int i = 1;
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
 
     private boolean mRecording = false;
     private String mRecordingPath = null;
     private String mRecordingPathCache = null;
-
     public CameraService() {
     }
 
@@ -177,6 +176,7 @@ public class CameraService extends Service {
                         mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
                         mRecordingPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
                         mMediaRecorder.setOutputFile(mRecordingPath);
+
                         mMediaRecorder.setPreviewDisplay(holder.getSurface());
 
                         try {
