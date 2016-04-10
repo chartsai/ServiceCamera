@@ -12,7 +12,7 @@ import android.widget.Toast;
 
 import java.util.Date;
 
-public class PhonecallReceiver extends BroadcastReceiver {
+public class PhoneCallReceiver extends BroadcastReceiver {
 
     //The receiver will be recreated whenever android feels like it.  We need a static variable to remember data between instantiations
 
@@ -20,7 +20,7 @@ public class PhonecallReceiver extends BroadcastReceiver {
     private static Date callStartTime;
     private static boolean isIncoming;
     private static String savedNumber;  //because the passed incoming is only valid in ringing
-    private static String TAG = "PhonecallReceiver";
+    private static String TAG = "PhoneCallReceiver";
     private boolean mRecording;
 
 
@@ -49,28 +49,23 @@ public class PhonecallReceiver extends BroadcastReceiver {
 
     //Derived classes should override these to respond to specific events of interest
     protected void onIncomingCallStarted(Context ctx, String number, Date start) {
-//        setRecording(true);
         tryToRecording(ctx);
     }
 
     protected void onOutgoingCallStarted(Context ctx, String number, Date start) {
-//        setRecording(true);
         tryToRecording(ctx);
     }
 
     protected void onIncomingCallEnded(Context ctx, String number, Date start, Date end) {
         tryToStopRecording(ctx);
-//        setRecording(false);
     }
 
     protected void onOutgoingCallEnded(Context ctx, String number, Date start, Date end) {
         tryToStopRecording(ctx);
-//        setRecording(false);
     }
 
     protected void onMissedCall(Context ctx, String number, Date start) {
         tryToStopRecording(ctx);
-//        setRecording(false);
     }
 
     //Deals with actual events

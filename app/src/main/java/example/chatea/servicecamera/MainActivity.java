@@ -15,7 +15,6 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
     private boolean mRecording;
-
     private Button bt_recordingButton;
 
     @Override
@@ -55,11 +54,11 @@ public class MainActivity extends Activity {
         ResultReceiver receiver = new ResultReceiver(new Handler()) {
             @Override
             protected void onReceiveResult(int resultCode, Bundle resultData) {
-                handleStopRecordingResult(resultCode, resultData);
+                handleStartRecordingResult(resultCode, resultData);
             }
         };
 
-        CameraService.startToStopRecording(this, receiver);
+        CameraService.startToStartRecording(this, receiver);
     }
 
     private void setRecording(boolean recording) {
