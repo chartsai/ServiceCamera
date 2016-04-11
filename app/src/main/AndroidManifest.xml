@@ -24,11 +24,21 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".PhoneCallVideoPlayer"
+                    android:theme="@style/Theme.AppCompat">
+        </activity>
+
         <service
             android:name=".CameraService"
             android:enabled="true"></service>
 
-        <activity android:name=".myVideoList"></activity>
+        <receiver android:name=".PhoneCallReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE"/>
+                <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
