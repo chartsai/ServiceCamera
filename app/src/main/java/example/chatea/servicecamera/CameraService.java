@@ -137,13 +137,13 @@ public class CameraService extends Service {
 
                         listSize = p.getSupportedPreviewSizes();
                         Camera.Size mPreviewSize = listSize.get(2);
-                        Log.v("TAG", "preview width = " + mPreviewSize.width
+                        Log.v(TAG, "preview width = " + mPreviewSize.width
                                 + " preview height = " + mPreviewSize.height);
                         p.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
 
                         listSize = p.getSupportedPictureSizes();
                         Camera.Size mPictureSize = listSize.get(2);
-                        Log.v("TAG", "capture width = " + mPictureSize.width
+                        Log.v(TAG, "capture width = " + mPictureSize.width
                                 + " capture height = " + mPictureSize.height);
                         p.setPictureSize(mPictureSize.width, mPictureSize.height);
                         mCamera.setParameters(p);
