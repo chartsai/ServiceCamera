@@ -32,7 +32,7 @@ public class CameraService extends Service {
     public static final int RECORD_RESULT_GET_CAMERA_FAILED = 2;
     public static final int RECORD_RESULT_ALREADY_RECORDING = 3;
     public static final int RECORD_RESULT_NOT_RECORDING = 4;
-    public static final int RECORD_RESULT_UNSTOPPABLE = 4;
+    public static final int RECORD_RESULT_UNSTOPPABLE = 5;
 
     private static final String START_SERVICE_COMMAND = "startServiceCommands";
     private static final int COMMAND_NONE = -1;
