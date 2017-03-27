@@ -17,7 +17,7 @@ import java.util.Date;
  */
 public class Util {
 
-    public static boolean checkCameraHardware(Context context) {
+    public static boolean isCameraExist(Context context) {
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
             return true;
         } else {

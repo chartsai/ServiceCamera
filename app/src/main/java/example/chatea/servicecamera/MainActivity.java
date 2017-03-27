@@ -8,6 +8,7 @@ import android.os.ResultReceiver;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -20,7 +21,7 @@ public class MainActivity extends Activity {
 
     private RadioButton mFrontRadioButton;
     private RadioButton mBackRadioButton;
-    private Button bt_recordingButton;
+    private Button mRecordingButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,8 +39,8 @@ public class MainActivity extends Activity {
             mFrontRadioButton.setChecked(false);
         }
 
-        bt_recordingButton = (Button) findViewById(R.id.recording_button);
-        bt_recordingButton.setOnClickListener(new View.OnClickListener() {
+        mRecordingButton = (Button) findViewById(R.id.recording_button);
+        mRecordingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mRecording) {
@@ -49,6 +50,15 @@ public class MainActivity extends Activity {
                 }
             }
         });
+
+        if (!Util.isCameraExist(this)) {
+            mFrontRadioButton.setVisibility(View.GONE);
+            mBackRadioButton.setVisibility(View.GONE);
+            mRecordingButton.setVisibility(View.GONE);
+
+            TextView noCameraTextView = (TextView) findViewById(R.id.no_camera_text_view);
+            noCameraTextView.setVisibility(View.VISIBLE);
+        }
     }
 
     private void startRecording() {
@@ -92,10 +102,10 @@ public class MainActivity extends Activity {
     private void setRecording(boolean recording) {
         if (recording) {
             mRecording = true;
-            bt_recordingButton.setText(R.string.stop_recording);
+            mRecordingButton.setText(R.string.stop_recording);
         } else {
             mRecording = false;
-            bt_recordingButton.setText(R.string.start_recording);
+            mRecordingButton.setText(R.string.start_recording);
         }
     }
 

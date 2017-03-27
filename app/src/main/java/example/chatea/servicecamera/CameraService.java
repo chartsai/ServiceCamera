@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
-import android.media.CameraProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -106,6 +105,10 @@ public class CameraService extends Service {
     }
 
     private void handleStartRecordingCommand(Intent intent) {
+        if (Util.isCameraExist(this)) {
+            throw new IllegalStateException("There is no device, not possible to start recording");
+        }
+
         final ResultReceiver resultReceiver = intent.getParcelableExtra(RESULT_RECEIVER);
 
         if (mRecording) {
@@ -115,104 +118,99 @@ public class CameraService extends Service {
         }
         mRecording = true;
 
-        if (Util.checkCameraHardware(this)) {
-            final int cameraId = intent.getIntExtra(SELECTED_CAMERA_FOR_RECORDING,
-                    Camera.CameraInfo.CAMERA_FACING_BACK);
-            mCamera = Util.getCameraInstance(cameraId);
-            if (mCamera != null) {
-                SurfaceView sv = new SurfaceView(this);
+        final int cameraId = intent.getIntExtra(SELECTED_CAMERA_FOR_RECORDING,
+                Camera.CameraInfo.CAMERA_FACING_BACK);
+        mCamera = Util.getCameraInstance(cameraId);
+        if (mCamera != null) {
+            SurfaceView sv = new SurfaceView(this);
 
-                WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
-                WindowManager.LayoutParams params = new WindowManager.LayoutParams(1, 1,
-                        WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
-                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                        PixelFormat.TRANSLUCENT);
+            WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(1, 1,
+                    WindowManager.LayoutParams.TYPE_SYSTEM_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                    PixelFormat.TRANSLUCENT);
 
-                SurfaceHolder sh = sv.getHolder();
+            SurfaceHolder sh = sv.getHolder();
 
-                sv.setZOrderOnTop(true);
-                sh.setFormat(PixelFormat.TRANSPARENT);
+            sv.setZOrderOnTop(true);
+            sh.setFormat(PixelFormat.TRANSPARENT);
 
-                sh.addCallback(new SurfaceHolder.Callback() {
-                    @Override
-                    public void surfaceCreated(SurfaceHolder holder) {
-                        Camera.Parameters params = mCamera.getParameters();
-                        mCamera.setParameters(params);
-                        Camera.Parameters p = mCamera.getParameters();
+            sh.addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    Camera.Parameters params = mCamera.getParameters();
+                    mCamera.setParameters(params);
+                    Camera.Parameters p = mCamera.getParameters();
 
-                        List<Camera.Size> listSize;
+                    List<Camera.Size> listSize;
 
-                        listSize = p.getSupportedPreviewSizes();
-                        Camera.Size mPreviewSize = listSize.get(2);
-                        Log.v(TAG, "preview width = " + mPreviewSize.width
-                                + " preview height = " + mPreviewSize.height);
-                        p.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
+                    listSize = p.getSupportedPreviewSizes();
+                    Camera.Size mPreviewSize = listSize.get(2);
+                    Log.v(TAG, "preview width = " + mPreviewSize.width
+                            + " preview height = " + mPreviewSize.height);
+                    p.setPreviewSize(mPreviewSize.width, mPreviewSize.height);
 
-                        listSize = p.getSupportedPictureSizes();
-                        Camera.Size mPictureSize = listSize.get(2);
-                        Log.v(TAG, "capture width = " + mPictureSize.width
-                                + " capture height = " + mPictureSize.height);
-                        p.setPictureSize(mPictureSize.width, mPictureSize.height);
-                        mCamera.setParameters(p);
+                    listSize = p.getSupportedPictureSizes();
+                    Camera.Size mPictureSize = listSize.get(2);
+                    Log.v(TAG, "capture width = " + mPictureSize.width
+                            + " capture height = " + mPictureSize.height);
+                    p.setPictureSize(mPictureSize.width, mPictureSize.height);
+                    mCamera.setParameters(p);
 
-                        try {
-                            mCamera.setPreviewDisplay(holder);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        mCamera.startPreview();
+                    try {
+                        mCamera.setPreviewDisplay(holder);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    mCamera.startPreview();
 
-                        mCamera.unlock();
+                    mCamera.unlock();
 
-                        mMediaRecorder = new MediaRecorder();
-                        mMediaRecorder.setCamera(mCamera);
+                    mMediaRecorder = new MediaRecorder();
+                    mMediaRecorder.setCamera(mCamera);
 
-                        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+                    mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+                    mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
-                        if (cameraId == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                            mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
-                        } else {
-                            mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_480P));
-                        }
-
-                        mRecordingPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
-                        mMediaRecorder.setOutputFile(mRecordingPath);
-
-                        mMediaRecorder.setPreviewDisplay(holder.getSurface());
-
-                        try {
-                            mMediaRecorder.prepare();
-                        } catch (IllegalStateException e) {
-                            Log.d(TAG, "IllegalStateException when preparing MediaRecorder: " + e.getMessage());
-                        } catch (IOException e) {
-                            Log.d(TAG, "IOException when preparing MediaRecorder: " + e.getMessage());
-                        }
-                        mMediaRecorder.start();
-
-                        resultReceiver.send(RECORD_RESULT_OK, null);
-                        Log.d(TAG, "Recording is started");
+                    if (cameraId == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                        mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+                    } else {
+                        mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_480P));
                     }
 
-                    @Override
-                    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                    mRecordingPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
+                    mMediaRecorder.setOutputFile(mRecordingPath);
+
+                    mMediaRecorder.setPreviewDisplay(holder.getSurface());
+
+                    try {
+                        mMediaRecorder.prepare();
+                    } catch (IllegalStateException e) {
+                        Log.d(TAG, "IllegalStateException when preparing MediaRecorder: " + e.getMessage());
+                    } catch (IOException e) {
+                        Log.d(TAG, "IOException when preparing MediaRecorder: " + e.getMessage());
                     }
+                    mMediaRecorder.start();
 
-                    @Override
-                    public void surfaceDestroyed(SurfaceHolder holder) {
-                    }
-                });
+                    resultReceiver.send(RECORD_RESULT_OK, null);
+                    Log.d(TAG, "Recording is started");
+                }
+
+                @Override
+                public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                }
+
+                @Override
+                public void surfaceDestroyed(SurfaceHolder holder) {
+                }
+            });
 
 
-                wm.addView(sv, params);
+            wm.addView(sv, params);
 
-            } else {
-                Log.d(TAG, "Get Camera from service failed");
-                resultReceiver.send(RECORD_RESULT_GET_CAMERA_FAILED, null);
-            }
         } else {
-            Log.d(TAG, "There is no camera hardware on device.");
-            resultReceiver.send(RECORD_RESULT_DEVICE_NO_CAMERA, null);
+            Log.d(TAG, "Get Camera from service failed");
+            resultReceiver.send(RECORD_RESULT_GET_CAMERA_FAILED, null);
         }
     }
 

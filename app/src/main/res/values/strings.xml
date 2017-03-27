@@ -5,4 +5,5 @@
     <string name="stop_recording">Stop Recording</string>
     <string name="front_camera">Front Camera</string>
     <string name="back_camera">Back Camera</string>
+    <string name="no_camera">There is no camera on this device</string>
 </resources>
