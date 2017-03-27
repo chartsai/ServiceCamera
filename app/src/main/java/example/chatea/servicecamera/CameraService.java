@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.media.CamcorderProfile;
+import android.media.CameraProfile;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -39,6 +40,8 @@ public class CameraService extends Service {
     private static final int COMMAND_START_RECORDING = 0;
     private static final int COMMAND_STOP_RECORDING = 1;
 
+    private static final String SELECTED_CAMERA_FOR_RECORDING = "cameraForRecording";
+
     private Camera mCamera;
     private MediaRecorder mMediaRecorder;
 
@@ -48,9 +51,11 @@ public class CameraService extends Service {
     public CameraService() {
     }
 
-    public static void startToStartRecording(Context context, ResultReceiver resultReceiver) {
+    public static void startToStartRecording(Context context, int cameraId,
+                                             ResultReceiver resultReceiver) {
         Intent intent = new Intent(context, CameraService.class);
         intent.putExtra(START_SERVICE_COMMAND, COMMAND_START_RECORDING);
+        intent.putExtra(SELECTED_CAMERA_FOR_RECORDING, cameraId);
         intent.putExtra(RESULT_RECEIVER, resultReceiver);
         context.startService(intent);
     }
@@ -111,7 +116,9 @@ public class CameraService extends Service {
         mRecording = true;
 
         if (Util.checkCameraHardware(this)) {
-            mCamera = Util.getCameraInstance();
+            final int cameraId = intent.getIntExtra(SELECTED_CAMERA_FOR_RECORDING,
+                    Camera.CameraInfo.CAMERA_FACING_BACK);
+            mCamera = Util.getCameraInstance(cameraId);
             if (mCamera != null) {
                 SurfaceView sv = new SurfaceView(this);
 
@@ -163,7 +170,11 @@ public class CameraService extends Service {
                         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
                         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
-                        mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+                        if (cameraId == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                            mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH));
+                        } else {
+                            mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_480P));
+                        }
 
                         mRecordingPath = Util.getOutputMediaFile(Util.MEDIA_TYPE_VIDEO).getPath();
                         mMediaRecorder.setOutputFile(mRecordingPath);

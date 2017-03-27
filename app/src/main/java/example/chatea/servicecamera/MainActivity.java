@@ -1,11 +1,13 @@
 package example.chatea.servicecamera;
 
 import android.app.Activity;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
 import android.widget.Toast;
 
 /**
@@ -16,12 +18,25 @@ public class MainActivity extends Activity {
     private boolean mRecording;
     private boolean mHandlingEvent;
 
+    private RadioButton mFrontRadioButton;
+    private RadioButton mBackRadioButton;
     private Button bt_recordingButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mFrontRadioButton = (RadioButton) findViewById(R.id.front_camera_radio_button);
+        if (!Util.isCameraExist(Camera.CameraInfo.CAMERA_FACING_FRONT)) {
+            mFrontRadioButton.setVisibility(View.GONE);
+            mFrontRadioButton.setChecked(false);
+        }
+        mBackRadioButton = (RadioButton) findViewById(R.id.back_camera_radio_button);
+        if (!Util.isCameraExist(Camera.CameraInfo.CAMERA_FACING_BACK)) {
+            mFrontRadioButton.setVisibility(View.GONE);
+            mFrontRadioButton.setChecked(false);
+        }
 
         bt_recordingButton = (Button) findViewById(R.id.recording_button);
         bt_recordingButton.setOnClickListener(new View.OnClickListener() {
@@ -47,7 +62,15 @@ public class MainActivity extends Activity {
                     mHandlingEvent = false;
                 }
             };
-            CameraService.startToStartRecording(this, receiver);
+            if (mFrontRadioButton.isChecked()) {
+                CameraService.startToStartRecording(this,
+                        Camera.CameraInfo.CAMERA_FACING_FRONT, receiver);
+            } else if (mBackRadioButton.isChecked()) {
+                CameraService.startToStartRecording(this,
+                        Camera.CameraInfo.CAMERA_FACING_FRONT, receiver);
+            } else {
+                throw new IllegalStateException("Must choose a camera for recording");
+            }
         }
     }
 

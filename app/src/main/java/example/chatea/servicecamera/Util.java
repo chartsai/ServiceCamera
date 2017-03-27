@@ -25,10 +25,22 @@ public class Util {
         }
     }
 
-    public static Camera getCameraInstance() {
+    public static boolean isCameraExist(int cameraId) {
+        int numberOfCameras = Camera.getNumberOfCameras();
+        for (int i = 0; i < numberOfCameras; i++) {
+            Camera.CameraInfo info = new Camera.CameraInfo();
+            Camera.getCameraInfo(i, info);
+            if (info.facing == cameraId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static Camera getCameraInstance(int cameraId) {
         Camera c = null;
         try {
-            c = Camera.open();
+            c = Camera.open(cameraId);
         } catch (Exception e) {
             Log.d("TAG", "Open camera failed: " + e);
         }
