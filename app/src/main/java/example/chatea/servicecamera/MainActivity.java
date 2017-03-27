@@ -14,6 +14,7 @@ import android.widget.Toast;
 public class MainActivity extends Activity {
 
     private boolean mRecording;
+    private boolean mHandlingEvent;
 
     private Button bt_recordingButton;
 
@@ -36,29 +37,33 @@ public class MainActivity extends Activity {
     }
 
     private void startRecording() {
-        setRecording(true);
-
-        ResultReceiver receiver = new ResultReceiver(new Handler()) {
-            @Override
-            protected void onReceiveResult(int resultCode, Bundle resultData) {
-                handleStartRecordingResult(resultCode, resultData);
-            }
-        };
-
-        CameraService.startToStartRecording(this, receiver);
+        if (!mHandlingEvent) {
+            mHandlingEvent = true;
+            ResultReceiver receiver = new ResultReceiver(new Handler()) {
+                @Override
+                protected void onReceiveResult(int resultCode, Bundle resultData) {
+                    setRecording(true);
+                    handleStartRecordingResult(resultCode, resultData);
+                    mHandlingEvent = false;
+                }
+            };
+            CameraService.startToStartRecording(this, receiver);
+        }
     }
 
     private void stopRecording() {
-        setRecording(false);
-
-        ResultReceiver receiver = new ResultReceiver(new Handler()) {
-            @Override
-            protected void onReceiveResult(int resultCode, Bundle resultData) {
-                handleStopRecordingResult(resultCode, resultData);
-            }
-        };
-
-        CameraService.startToStopRecording(this, receiver);
+        if (!mHandlingEvent) {
+            mHandlingEvent = true;
+            ResultReceiver receiver = new ResultReceiver(new Handler()) {
+                @Override
+                protected void onReceiveResult(int resultCode, Bundle resultData) {
+                    setRecording(false);
+                    handleStopRecordingResult(resultCode, resultData);
+                    mHandlingEvent = false;
+                }
+            };
+            CameraService.startToStopRecording(this, receiver);
+        }
     }
 
     private void setRecording(boolean recording) {
@@ -86,8 +91,11 @@ public class MainActivity extends Activity {
             String videoPath = resultData.getString(CameraService.VIDEO_PATH);
             Toast.makeText(this, "Record succeed, file saved in " + videoPath,
                     Toast.LENGTH_LONG).show();
+        } else if (resultCode == CameraService.RECORD_RESULT_UNSTOPPABLE) {
+            Toast.makeText(this, "Stop recording failed...", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Record failed...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Recording failed...", Toast.LENGTH_SHORT).show();
+            setRecording(true);
         }
     }
 }

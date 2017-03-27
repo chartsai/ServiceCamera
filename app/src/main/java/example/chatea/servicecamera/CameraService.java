@@ -32,6 +32,7 @@ public class CameraService extends Service {
     public static final int RECORD_RESULT_GET_CAMERA_FAILED = 2;
     public static final int RECORD_RESULT_ALREADY_RECORDING = 3;
     public static final int RECORD_RESULT_NOT_RECORDING = 4;
+    public static final int RECORD_RESULT_UNSTOPPABLE = 4;
 
     private static final String START_SERVICE_COMMAND = "startServiceCommands";
     private static final int COMMAND_NONE = -1;
@@ -213,19 +214,25 @@ public class CameraService extends Service {
             return;
         }
 
-        mMediaRecorder.stop();
-        mMediaRecorder.release();
-        mCamera.stopPreview();
-        mCamera.release();
+        try {
+            mMediaRecorder.stop();
+            mMediaRecorder.release();
+        } catch (RuntimeException e) {
+            mMediaRecorder.reset();
+            resultReceiver.send(RECORD_RESULT_UNSTOPPABLE, new Bundle());
+            return;
+        } finally {
+            mMediaRecorder = null;
+            mCamera.stopPreview();
+            mCamera.release();
+
+            mRecording = false;
+        }
 
         Bundle b = new Bundle();
         b.putString(VIDEO_PATH, mRecordingPath);
-
-        mRecordingPath = null;
-
         resultReceiver.send(RECORD_RESULT_OK, b);
 
-        mRecording = false;
         Log.d(TAG, "recording is finished.");
     }
 
