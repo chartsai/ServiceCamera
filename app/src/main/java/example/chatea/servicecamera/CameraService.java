@@ -105,7 +105,7 @@ public class CameraService extends Service {
     }
 
     private void handleStartRecordingCommand(Intent intent) {
-        if (Util.isCameraExist(this)) {
+        if (!Util.isCameraExist(this)) {
             throw new IllegalStateException("There is no device, not possible to start recording");
         }
 
