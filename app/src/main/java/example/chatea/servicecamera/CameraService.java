@@ -90,6 +90,9 @@ public class CameraService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            throw new IllegalStateException("Must start the service with intent");
+        }
         switch (intent.getIntExtra(START_SERVICE_COMMAND, COMMAND_NONE)) {
             case COMMAND_START_RECORDING:
                 handleStartRecordingCommand(intent);
@@ -101,7 +104,7 @@ public class CameraService extends Service {
                 throw new UnsupportedOperationException("Cannot start service with illegal commands");
         }
 
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     private void handleStartRecordingCommand(Intent intent) {
