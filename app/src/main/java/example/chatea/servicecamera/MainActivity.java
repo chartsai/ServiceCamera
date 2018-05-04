@@ -35,8 +35,8 @@ public class MainActivity extends Activity {
         }
         mBackRadioButton = (RadioButton) findViewById(R.id.back_camera_radio_button);
         if (!Util.isCameraExist(Camera.CameraInfo.CAMERA_FACING_BACK)) {
-            mFrontRadioButton.setVisibility(View.GONE);
-            mFrontRadioButton.setChecked(false);
+            mBackRadioButton.setVisibility(View.GONE);
+            mBackRadioButton.setChecked(false);
         }
 
         mRecordingButton = (Button) findViewById(R.id.recording_button);
